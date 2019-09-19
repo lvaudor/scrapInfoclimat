@@ -12,10 +12,6 @@
 #'                       station_name="dole-tavaux",
 #'                       station_id="07386")
 
-
-
-
-
 meteo_period_station=function(date_beginning,
                               date_end,
                               station_name,

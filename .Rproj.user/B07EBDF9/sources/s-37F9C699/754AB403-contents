@@ -5,6 +5,7 @@
 #' @return a tibble
 #' @export
 #' @examples
+#' @examples
 #' library(scrapInfoclimat)
 #' meteo_date_station(date_ymd="2018-06-05",
 #'                    station_name="dole-tavaux",
