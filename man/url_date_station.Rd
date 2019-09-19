@@ -21,7 +21,7 @@ Returns the url that will be scraped
 }
 \examples{
 library(scrapInfoclimat)
-url_par_date_station(date="2018-06-01",
-                   station_name="dole-tavaux",
-                   station_id="07386")
+url_date_station(date="2018-06-01",
+                 station_name="dole-tavaux",
+                 station_id="07386")
 }

@@ -5,16 +5,16 @@
 #' @return a tibble
 #' @examples
 #' library(scrapInfoclimat)
-#' url_par_date_station(date="2018-06-01",
-#'                    station_name="dole-tavaux",
-#'                    station_id="07386")
+#' url_date_station(date="2018-06-01",
+#'                  station_name="dole-tavaux",
+#'                  station_id="07386")
 
 url_date_station=function(date_ymd,
-                              station_name,
-                              station_id){
+                          station_name,
+                          station_id){
   tibble::tibble(url_base="https://www.infoclimat.fr/observations-meteo/archives",
                  date=lubridate::ymd(date_ymd)) %>%
-    mutate(day=as.character(lubridate::day(date_ymd)),
+    dplyr::mutate(day=as.character(lubridate::day(date_ymd)),
            month=lubridate::month(date_ymd),
            year=lubridate::year(date_ymd)) %>%
     dplyr::mutate(month=dplyr::case_when(month==1~"janvier",

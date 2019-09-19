@@ -24,7 +24,7 @@ Returns a tibble with hourly weather data for a period of several days
 \examples{
 library(scrapInfoclimat)
 meteo_period_station(date_beginning="2018-06-01",
-                      date_end="2018-09-30",
+                      date_end="2018-06-03",
                       station_name="dole-tavaux",
                       station_id="07386")
 }
