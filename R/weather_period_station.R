@@ -7,19 +7,19 @@
 #' @export
 #' @examples
 #' library(scrapInfoclimat)
-#' meteo_period_station(date_beginning="2018-06-01",
+#' weather_period_station(date_beginning="2018-06-01",
 #'                       date_end="2018-06-03",
 #'                       station_name="dole-tavaux",
 #'                       station_id="07386")
 
-meteo_period_station=function(date_beginning,
+weather_period_station=function(date_beginning,
                               date_end,
                               station_name,
                               station_id){
   seq(lubridate::ymd(date_beginning),
       lubridate::ymd(date_end),
       1) %>%
-    purrr::map_df(meteo_date_station,
+    purrr::map_df(weather_date_station,
                   station_name=station_name,
                   station_id=station_id)
 }
