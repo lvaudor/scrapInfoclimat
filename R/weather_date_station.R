@@ -9,50 +9,47 @@
 #' weather_date_station(date_ymd="2018-06-05",
 #'                    station_name="dole-tavaux",
 #'                    station_id="07386")
-
 weather_date_station=function(date_ymd,station_name,station_id){
   my_url=url_date_station(date_ymd,station_name,station_id)
-  rows=my_url %>%
-    xml2::read_html() %>%
-    rvest::html_nodes("#tableau-releves") %>%
-    rvest::html_nodes("tbody") %>%
-    rvest::html_children()
+  content=my_url %>%
+    xml2::read_html()
+  variables=content %>% 
+    rvest::html_nodes("thead") %>% 
+    rvest::html_nodes("th") %>% 
+    rvest::html_text()
+  rows= content %>%
+    rvest::html_nodes("tbody") %>% 
+    rvest::html_children()%>%
+    purrr::map(html_children) %>%
+    purrr::map(html_text) %>% 
+    purrr::map(as.matrix) %>% 
+    purrr::map(t) %>% 
+    purrr::map(as_tibble)  %>% 
+    bind_rows() %>% 
+    magrittr::set_colnames(variables)
 
   tib_weather=rows %>%
-    purrr::map(html_children) %>%
-    purrr::map(html_text) %>%
-    purrr::map_df(.,~tibble::tibble(time=.[1],
-                                    temperature=.[3],
-                                    pluie=.[5],
-                                    humidite=.[6],
-                                    pt_de_rosee=.[7],
-                                    vent_moyen=.[8],
-                                    pression=.[9],
-                                    visibilite=.[10])) %>%
-    dplyr::mutate(time=stringr::str_replace(time,"h",""),
-                  temperature=stringr::str_replace(temperature," °C",""),
-                  rain=stringr::str_replace(pluie," mm/1h",""),
-                  wetness=stringr::str_replace(humidite,"%",""),
-                  dew_point=stringr::str_replace(pt_de_rosee," °C",""),
-                  wind_gusts=stringr::str_extract(vent_moyen,"(?<=(h\\())[\\d\\.]*"),
-                  wind_average=stringr::str_extract(vent_moyen,"\\d*(?=(\\skm))"),
-                  pressure=stringr::str_replace(pression,"hPa",""),
-                  visibility=stringr::str_replace(visibilite," km","")
-    ) %>%
-    mutate(time=stringr::str_c(date_ymd," ",time,":00:00")) %>% 
-    select(time,temperature,rain,wetness,dew_point,wind_average,wind_gusts,pressure,visibility)
-
-  bioweather=rows %>%
-    purrr::map(rvest::html_children) %>%
-    purrr::map(purrr::pluck,4) %>%
-    purrr::map(rvest::html_node,".button-rr-soleil") %>%
-    purrr::map(rvest::html_text) %>%
-    unlist() %>%
-    stringr::str_trim()
-  tib_weather=dplyr::bind_cols(tib_weather,
-                             tibble::tibble(bioweather=bioweather)) %>%
-    dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-time)) %>%
-    dplyr::mutate(time=lubridate::ymd_hms(time))
+    dplyr::transmute(time=.$Heure,
+                  temperature=.$Température,
+                  rain=.$Pluie,
+                  wetness=.$Humidité,
+                  dew_point=.$`Pt. de rosée`,
+                  wind=.$`Vent moyen (raf.)`,
+                  pressure=.$Pression) %>%
+    dplyr::mutate(time=case_when(str_detect(time,"h$")~str_replace(time,"h",":00"),
+                                 !str_detect(time,"h$")~str_replace(time,"h",":"))) %>% 
+    dplyr::mutate(temperature=stringr::str_replace(temperature," °C",""),
+                  rain=stringr::str_replace(rain,"(?<=\\s).*",""),
+                  wetness=stringr::str_replace(wetness,"%",""),
+                  dew_point=stringr::str_replace(dew_point," °C",""),
+                  wind_gusts=stringr::str_extract(wind,"(?<=(h\\())[\\d\\.]*"),
+                  wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),
+                  pressure=stringr::str_replace(pressure,"hPa","")) %>%
+    dplyr::select(-wind)
+    dplyr::mutate(rain=stringr::str_replace(rain,"\\s","")) %>%
+    dplyr::mutate(time=stringr::str_c(date_ymd," ", time)) %>% 
+    dplyr::mutate(time=lubridate::ymd_hm(time)) %>%
+    dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-time)) 
 
   return(tib_weather)
 }
