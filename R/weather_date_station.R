@@ -44,10 +44,11 @@ weather_date_station=function(date_ymd,station_name,station_id){
                   dew_point=stringr::str_replace(dew_point," °C",""),
                   wind_gusts=stringr::str_extract(wind,"(?<=(h\\())[\\d\\.]*"),
                   wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),
-                  pressure=stringr::str_replace(pressure,"hPa","")) %>%
-    dplyr::select(-wind)
-    dplyr::mutate(rain=stringr::str_replace(rain,"\\s","")) %>%
-    dplyr::mutate(time=stringr::str_c(date_ymd," ", time)) %>% 
+                  pressure=stringr::str_replace(pressure,"hPa","")) %>% 
+    dplyr::mutate(rain=stringr::str_replace(rain,"\\s",""),
+                  pressure=stringr::str_replace("=",""),
+                  time=stringr::str_c(date_ymd," ", time)) %>% 
+    dplyr::select(-wind) %>% 
     dplyr::mutate(time=lubridate::ymd_hm(time)) %>%
     dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-time)) 
 
