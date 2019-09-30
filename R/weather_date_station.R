@@ -46,7 +46,7 @@ weather_date_station=function(date_ymd,station_name,station_id){
                   wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),
                   pressure=stringr::str_replace(pressure,"hPa","")) %>% 
     dplyr::mutate(rain=stringr::str_replace(rain,"\\s",""),
-                  pressure=stringr::str_replace("=",""),
+                  pressure=stringr::str_replace(pressure,"=",""),
                   time=stringr::str_c(date_ymd," ", time)) %>% 
     dplyr::select(-wind) %>% 
     dplyr::mutate(time=lubridate::ymd_hm(time)) %>%
