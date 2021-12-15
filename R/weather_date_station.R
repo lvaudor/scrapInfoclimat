@@ -2,13 +2,15 @@
 #' @param date the date of interest, formatted as a year-month-day string (e.g. 2019-03-27)
 #' @param station_name the name of the station of interest, for instance "dole-tavaux"
 #' @param identifiant_station the ID of the station of interest, for instance "07386"
+#' @param sleep how many seconds to wait (to slow down scraping). Defaults to 0.
 #' @return a tibble
 #' @export
 #' @examples
 #' library(scrapInfoclimat)
 #' weather_date_station(date_ymd="2018-06-05",
-#'                    station_name="dole-tavaux",
-#'                    station_id="07386")
+#'                      station_name="dole-tavaux",
+#'                      station_id="07386",
+#'                      sleep=0)
 weather_date_station=function(date_ymd,station_name,station_id){
   my_url=url_date_station(date_ymd,station_name,station_id)
   content=my_url %>%

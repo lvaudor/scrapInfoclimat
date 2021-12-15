@@ -12,6 +12,8 @@ weather_date_station(date_ymd, station_name, station_id)
 \item{date}{the date of interest, formatted as a year-month-day string (e.g. 2019-03-27)}
 
 \item{identifiant_station}{the ID of the station of interest, for instance "07386"}
+
+\item{sleep}{how many seconds to wait (to slow down scraping). Defaults to 0.}
 }
 \value{
 a tibble
@@ -22,6 +24,7 @@ Returns a tibble a tibble with hourly weather data for one day
 \examples{
 library(scrapInfoclimat)
 weather_date_station(date_ymd="2018-06-05",
-                   station_name="dole-tavaux",
-                   station_id="07386")
+                     station_name="dole-tavaux",
+                     station_id="07386",
+                     sleep=0)
 }
