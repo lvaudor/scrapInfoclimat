@@ -2,14 +2,16 @@
 #' @param date the date of interest, formatted as a year-month-day string (e.g. 2019-03-27)
 #' @param station_name the name of the station of interest, for instance "dole-tavaux"
 #' @param identifiant_station the ID of the station of interest, for instance "07386"
+#' @param sleep how many seconds to wait (to slow down scraping). Defaults to 0.
 #' @return a tibble
 #' @export
 #' @examples
 #' library(scrapInfoclimat)
 #' weather_date_station(date_ymd="2018-06-05",
-#'                    station_name="dole-tavaux",
-#'                    station_id="07386")
-weather_date_station=function(date_ymd,station_name,station_id){
+#'                      station_name="dole-tavaux",
+#'                      station_id="07386",
+#'                      sleep=5)
+weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
   my_url=url_date_station(date_ymd,station_name,station_id)
   content=my_url %>%
     xml2::read_html()
@@ -25,7 +27,8 @@ weather_date_station=function(date_ymd,station_name,station_id){
     purrr::map(rvest::html_text) %>% 
     purrr::map(as.matrix) %>% 
     purrr::map(t) %>% 
-    purrr::map(tibble::as_tibble,.name_repair="minimal")  %>% 
+    purrr::map(tibble::as_tibble,
+               .name_repair=~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))  %>% # silence name_repair
     dplyr::bind_rows() %>% 
     .[,3:ncol(.)] %>% 
     magrittr::set_colnames(variables)
@@ -70,6 +73,6 @@ weather_date_station=function(date_ymd,station_name,station_id){
                   pressure=stringr::str_replace(pressure,"=","")) %>% 
     dplyr::select(-wind) %>%
     dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-timestamp))
-
+  Sys.sleep(sleep)
   return(tib_weather)
 }
