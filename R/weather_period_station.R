@@ -27,3 +27,17 @@ weather_period_station=function(date_beginning,
                         sleep=sleep)
   return(result)
 }
+
+weather_period_station=function(date_beginning,
+                              date_end,
+                              station_name,
+                              station_id){
+  seq(lubridate::ymd(date_beginning),
+      lubridate::ymd(date_end),
+      1) %>%
+    purrr::map_df(weather_date_station,
+                  station_name=station_name,
+                  station_id=station_id,
+                  sleep=sleep)
+>>>>>>> b09a7a8be005c6477cd97f03491790d936c58b6a
+}
