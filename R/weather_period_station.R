@@ -39,5 +39,4 @@ weather_period_station=function(date_beginning,
                   station_name=station_name,
                   station_id=station_id,
                   sleep=sleep)
->>>>>>> b09a7a8be005c6477cd97f03491790d936c58b6a
 }
