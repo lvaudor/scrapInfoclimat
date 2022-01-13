@@ -58,9 +58,9 @@ weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
   tib_weather=tib_raw %>% 
     dplyr::transmute(
                   timestamp=timestamp,
-                  temperature=temp_a_c_rature,
+                  temperature=temperature,
                   rain=pluie,
-                  wetness=humidit_a_c,
+                  wetness=humidite,
                   wind=vent) %>% 
     dplyr::mutate(temperature=stringr::str_replace(temperature," °C",""),
                   rain=stringr::str_replace(rain,"(?<=\\s).*",""),
@@ -72,9 +72,9 @@ weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
     dplyr::select(-wind) %>%
     dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-timestamp))
   
-  if("pt_de_ros_a_c_e" %in% colnames(tib_raw)){
+  if("pt_de_rosee" %in% colnames(tib_raw)){
     tib_supplement=tib_raw %>% 
-      dplyr::transmute(dew_point=pt_de_ros_a_c_e) %>% 
+      dplyr::transmute(dew_point=pt_de_rosee) %>% 
       dplyr::mutate(dew_point=stringr::str_replace(dew_point," °C",""))
     tib_weather=bind_cols(tib_weather,tib_supplement)
   }
