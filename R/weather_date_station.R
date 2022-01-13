@@ -11,15 +11,17 @@
 #'                      station_name="dole-tavaux",
 #'                      station_id="07386",
 #'                      sleep=5)
+#' weather_date_station(date_ymd="2021-06-01",
+#'                      station_name="st-christophe-sur-guiers-le-habert-de-la-ruchere",
+#'                      station_id="000CD")
 weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
-  my_url=url_date_station(date_ymd,station_name,station_id)
+  my_url=scrapInfoclimat:::url_date_station(date_ymd,station_name,station_id)
   content=my_url %>%
     xml2::read_html()
   variables=content %>% 
     rvest::html_nodes("thead") %>% 
     rvest::html_nodes("th") %>% 
-    rvest::html_text() %>% 
-    .[3:length(.)]
+    rvest::html_text()
   rows= content %>%
     rvest::html_nodes("tbody") %>% 
     rvest::html_children()%>%
@@ -29,8 +31,7 @@ weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
     purrr::map(t) %>% 
     purrr::map(tibble::as_tibble,
                .name_repair=~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))  %>% # silence name_repair
-    dplyr::bind_rows() %>% 
-    .[,3:ncol(.)] %>% 
+    dplyr::bind_rows() %>%
     magrittr::set_colnames(variables)
   date_et_heure=content %>%
     rvest::html_nodes("tbody") %>% 
@@ -47,32 +48,42 @@ weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
     purrr::map(~.[!is.na(.)]) %>% 
     purrr::map_chr(stringr::str_extract,".*(?=\\sUTC)")
   timestamp=purrr::map2(date,heure,stringr::str_c,sep=" ")
-  tib_weather=tibble::tibble(timestamp=timestamp,
+  tib_raw=tibble::tibble(timestamp=timestamp,
                              date=date,
                              time=heure) %>% 
     dplyr::bind_cols(rows) %>% 
-    dplyr::mutate(timestamp=lubridate::dmy_hm(timestamp))
-  tib_weather=tib_weather %>% 
+    dplyr::mutate(timestamp=lubridate::dmy_hm(timestamp)) %>% 
+    janitor::clean_names()
+  
+  tib_weather=tib_raw %>% 
     dplyr::transmute(
                   timestamp=timestamp,
-                  temperature=.$Température,
-                  rain=.$Pluie,
-                  wetness=.$Humidité,
-                  dew_point=.[[10]],
-                  wind=.$`Vent`,
-                  pressure=.$Pression) %>% 
+                  temperature=temp_a_c_rature,
+                  rain=pluie,
+                  wetness=humidit_a_c,
+                  wind=vent) %>% 
     dplyr::mutate(temperature=stringr::str_replace(temperature," °C",""),
                   rain=stringr::str_replace(rain,"(?<=\\s).*",""),
                   wetness=stringr::str_replace(wetness,"%",""),
-                  dew_point=stringr::str_replace(dew_point," °C",""),
                   wind_gusts=stringr::str_extract(wind,"(?<=hraf\\.)[\\d\\.]*"),
-                  wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),
-                  pressure=stringr::str_replace(pressure,"hPa","")) %>% 
-    dplyr::mutate(temperature=stringr::str_extract(temperature,"^[-\\.0-9]"),
-                  rain=stringr::str_replace(rain,"\\s",""),
-                  pressure=stringr::str_replace(pressure,"=","")) %>% 
+                  wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),) %>% 
+    dplyr::mutate(temperature=stringr::str_extract(temperature,"^[-\\.0-9]*"),
+                  rain=stringr::str_replace(rain,"\\s","")) %>% 
     dplyr::select(-wind) %>%
     dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-timestamp))
-  Sys.sleep(sleep)
+  
+  if("pt_de_ros_a_c_e" %in% colnames(tib_raw)){
+    tib_supplement=tib_raw %>% 
+      dplyr::transmute(dew_point=pt_de_ros_a_c_e) %>% 
+      dplyr::mutate(dew_point=stringr::str_replace(dew_point," °C",""))
+    tib_weather=bind_cols(tib_weather,tib_supplement)
+  }
+  if("pression" %in% colnames(tib_raw)){
+    tib_supplement=tib_raw %>% 
+      dplyr::transmute(pressure=pression) %>% 
+      dplyr::transmute(pressure=stringr::str_replace(pressure,"hPa","")) %>% 
+      dplyr::mutate(pressure=stringr::str_replace(pressure,"=",""))
+    tib_weather=bind_cols(tib_weather,tib_supplement)
+  }
   return(tib_weather)
 }
