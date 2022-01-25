@@ -11,7 +11,7 @@
 #'                      station_name="dole-tavaux",
 #'                      station_id="07386",
 #'                      sleep=5)
-#' weather_date_station(date_ymd="2021-06-01",
+#' weather_date_station(date_ymd="2021-09-26",
 #'                      station_name="st-christophe-sur-guiers-le-habert-de-la-ruchere",
 #'                      station_id="000CD")
 weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
@@ -54,37 +54,40 @@ weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
     dplyr::bind_cols(rows) %>% 
     dplyr::mutate(timestamp=lubridate::dmy_hm(timestamp)) %>% 
     janitor::clean_names()
-  
-  tib_weather= tib_raw %>% 
-    rename_with(~stringr::str_replace(.,"_a_c[_]?","e")) %>% 
-    dplyr::transmute(
-                  timestamp=timestamp,
-                  temperature=temperature,
-                  rain=pluie,
-                  wetness=humidite,
-                  wind=vent) %>% 
-    dplyr::mutate(temperature=stringr::str_replace(temperature," °C",""),
-                  rain=stringr::str_replace(rain,"(?<=\\s).*",""),
-                  wetness=stringr::str_replace(wetness,"%",""),
-                  wind_gusts=stringr::str_extract(wind,"(?<=hraf\\.)[\\d\\.]*"),
-                  wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),) %>% 
-    dplyr::mutate(temperature=stringr::str_extract(temperature,"^[-\\.0-9]*"),
-                  rain=stringr::str_replace(rain,"\\s","")) %>% 
-    dplyr::select(-wind) %>%
-    dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-timestamp))
-  
-  if("pt_de_rosee" %in% colnames(tib_raw)){
-    tib_supplement=tib_raw %>% 
-      dplyr::transmute(dew_point=pt_de_rosee) %>% 
-      dplyr::mutate(dew_point=stringr::str_replace(dew_point," °C",""))
-    tib_weather=bind_cols(tib_weather,tib_supplement)
+  if(nrow(tib_raw)==0){
+    tib_weather=NULL
+  }else{
+      tib_weather= tib_raw %>% 
+        rename_with(~stringr::str_replace(.,"_a_c[_]?","e")) %>% 
+        dplyr::transmute(
+                      timestamp=timestamp,
+                      temperature=temperature,
+                      rain=pluie,
+                      wetness=humidite,
+                      wind=vent) %>% 
+        dplyr::mutate(temperature=stringr::str_replace(temperature," °C",""),
+                      rain=stringr::str_replace(rain,"(?<=\\s).*",""),
+                      wetness=stringr::str_replace(wetness,"%",""),
+                      wind_gusts=stringr::str_extract(wind,"(?<=hraf\\.)[\\d\\.]*"),
+                      wind_average=stringr::str_extract(wind,"\\d*(?=(\\skm))"),) %>% 
+        dplyr::mutate(temperature=stringr::str_extract(temperature,"^[-\\.0-9]*"),
+                      rain=stringr::str_replace(rain,"\\s","")) %>% 
+        dplyr::select(-wind) %>%
+        dplyr::mutate_at(.funs="as.numeric",.vars=dplyr::vars(-timestamp))
+      
+      if("pt_de_rosee" %in% colnames(tib_raw)){
+        tib_supplement=tib_raw %>% 
+          dplyr::transmute(dew_point=pt_de_rosee) %>% 
+          dplyr::mutate(dew_point=stringr::str_replace(dew_point," °C",""))
+        tib_weather=bind_cols(tib_weather,tib_supplement)
+      }
+      if("pression" %in% colnames(tib_raw)){
+        tib_supplement=tib_raw %>% 
+          dplyr::transmute(pressure=pression) %>% 
+          dplyr::transmute(pressure=stringr::str_replace(pressure,"hPa","")) %>% 
+          dplyr::mutate(pressure=stringr::str_replace(pressure,"=",""))
+        tib_weather=bind_cols(tib_weather,tib_supplement)
   }
-  if("pression" %in% colnames(tib_raw)){
-    tib_supplement=tib_raw %>% 
-      dplyr::transmute(pressure=pression) %>% 
-      dplyr::transmute(pressure=stringr::str_replace(pressure,"hPa","")) %>% 
-      dplyr::mutate(pressure=stringr::str_replace(pressure,"=",""))
-    tib_weather=bind_cols(tib_weather,tib_supplement)
   }
   return(tib_weather)
 }
