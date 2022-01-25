@@ -55,7 +55,8 @@ weather_date_station=function(date_ymd,station_name,station_id, sleep=0){
     dplyr::mutate(timestamp=lubridate::dmy_hm(timestamp)) %>% 
     janitor::clean_names()
   
-  tib_weather=tib_raw %>% 
+  tib_weather= tib_raw %>% 
+    rename_with(~stringr::str_replace(.,"_a_c[_]?","e")) %>% 
     dplyr::transmute(
                   timestamp=timestamp,
                   temperature=temperature,

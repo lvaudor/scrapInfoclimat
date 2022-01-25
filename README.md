@@ -1,6 +1,6 @@
 # scrapInfoclimat
 
-Install :
+Install and setup via:
 
 ```{r}
 options(download.file.method="libcurl")
